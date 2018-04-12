@@ -37,6 +37,7 @@ use std::ops::{
     MulAssign,
     DivAssign,
     RemAssign,
+    Neg,
 };
 
 /// “fast-math” wrapper for f32 and f64.
@@ -164,6 +165,21 @@ impl_assignop! {
     MulAssign, mul_assign, fmul_fast;
     DivAssign, div_assign, fdiv_fast;
     RemAssign, rem_assign, frem_fast;
+}
+
+impl Neg for Fast<f64> {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Fast(-self.0)
+    }
+}
+impl Neg for Fast<f32> {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Fast(-self.0)
+    }
 }
 
 /*
