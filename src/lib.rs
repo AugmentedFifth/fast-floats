@@ -317,6 +317,22 @@ impl Fast<f32> {
             x => (x + ((x * x) - 1.0).sqrt()).ln(),
         }
     }
+
+    #[inline(always)]
+    pub fn min(self, other: Self) -> Self {
+        match self {
+            x if x <= other => x,
+            _ => other,
+        }
+    }
+
+    #[inline(always)]
+    pub fn max(self, other: Self) -> Self {
+        match self {
+            x if x >= other => x,
+            _ => other,
+        }
+    }
 }
 impl Fast<f64> {
     #[inline(always)]
@@ -447,6 +463,22 @@ impl Fast<f64> {
         match self {
             x if x < 1.0.into() => std::f64::NAN.into(),
             x => (x + ((x * x) - 1.0).sqrt()).ln(),
+        }
+    }
+
+    #[inline(always)]
+    pub fn min(self, other: Self) -> Self {
+        match self {
+            x if x <= other => x,
+            _ => other,
+        }
+    }
+
+    #[inline(always)]
+    pub fn max(self, other: Self) -> Self {
+        match self {
+            x if x >= other => x,
+            _ => other,
         }
     }
 }
