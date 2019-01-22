@@ -25,7 +25,7 @@ use num_traits::Zero;
 
 extern crate core as std;
 
-use std::intrinsics::{fadd_fast, fsub_fast, fmul_fast, fdiv_fast, frem_fast};
+use std::intrinsics::{self, fadd_fast, fsub_fast, fmul_fast, fdiv_fast, frem_fast};
 use std::ops::{
     Add,
     Sub,
@@ -49,10 +49,12 @@ pub struct Fast<F>(pub F);
 
 impl<F> Fast<F> {
     /// Get the inner value
+    #[inline(always)]
     pub fn get(self) -> F { self.0 }
 }
 
 impl<F> From<F> for Fast<F> {
+    #[inline(always)]
     fn from(x: F) -> Self { Fast(x) }
 }
 
@@ -170,6 +172,7 @@ impl_assignop! {
 impl Neg for Fast<f64> {
     type Output = Self;
 
+    #[inline(always)]
     fn neg(self) -> Self {
         Fast(-self.0)
     }
@@ -177,8 +180,274 @@ impl Neg for Fast<f64> {
 impl Neg for Fast<f32> {
     type Output = Self;
 
+    #[inline(always)]
     fn neg(self) -> Self {
         Fast(-self.0)
+    }
+}
+
+impl Fast<f32> {
+    #[inline(always)]
+    pub fn floor(self) -> Self {
+        Self(unsafe { intrinsics::floorf32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn ceil(self) -> Self {
+        Self(unsafe { intrinsics::ceilf32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn round(self) -> Self {
+        Self(unsafe { intrinsics::roundf32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn trunc(self) -> Self {
+        Self(unsafe { intrinsics::truncf32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn fract(self) -> Self {
+        self - self.trunc()
+    }
+
+    #[inline(always)]
+    pub fn abs(self) -> Self {
+        Self(unsafe { intrinsics::fabsf32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn is_nan(self) -> bool {
+        self.0.is_nan()
+    }
+
+    #[inline(always)]
+    pub fn signum(self) -> Self {
+        if self.is_nan() {
+            Self(std::f32::NAN)
+        } else {
+            Self(unsafe { intrinsics::copysignf32(1.0, self.0) })
+        }
+    }
+
+    #[inline(always)]
+    pub fn copysign(self, y: Self) -> Self {
+        Self(unsafe { intrinsics::copysignf32(self.0, y.0) })
+    }
+
+    #[inline(always)]
+    pub fn mul_add(self, a: Self, b: Self) -> Self {
+        Self(unsafe { intrinsics::fmaf32(self.0, a.0, b.0) })
+    }
+
+    #[inline(always)]
+    pub fn powi(self, n: i32) -> Self {
+        Self(unsafe { intrinsics::powif32(self.0, n) })
+    }
+
+    #[inline(always)]
+    pub fn powf(self, n: Self) -> Self {
+        Self(unsafe { intrinsics::powf32(self.0, n.0) })
+    }
+
+    #[inline(always)]
+    pub fn sqrt(self) -> Self {
+        Self(unsafe { intrinsics::sqrtf32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn exp(self) -> Self {
+        Self(unsafe { intrinsics::expf32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn exp2(self) -> Self {
+        Self(unsafe { intrinsics::exp2f32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn ln(self) -> Self {
+        Self(unsafe { intrinsics::logf32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn log(self, base: Self) -> Self {
+        self.ln() / base.ln()
+    }
+
+    #[inline(always)]
+    pub fn log2(self) -> Self {
+        Self(unsafe { intrinsics::log2f32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn log10(self) -> Self {
+        Self(unsafe { intrinsics::log10f32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn sin(self) -> Self {
+        Self(unsafe { intrinsics::sinf32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn cos(self) -> Self {
+        Self(unsafe { intrinsics::cosf32(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn sin_cos(self) -> (Self, Self) {
+        (self.sin(), self.cos())
+    }
+
+    #[inline]
+    pub fn asinh(self) -> Self {
+        if self.0 == std::f32::NEG_INFINITY {
+            self
+        } else {
+            (self + ((self * self) + 1.0).sqrt()).ln()
+        }
+    }
+
+    #[inline]
+    pub fn acosh(self) -> Self {
+        match self {
+            x if x < 1.0.into() => std::f32::NAN.into(),
+            x => (x + ((x * x) - 1.0).sqrt()).ln(),
+        }
+    }
+}
+impl Fast<f64> {
+    #[inline(always)]
+    pub fn floor(self) -> Self {
+        Self(unsafe { intrinsics::floorf64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn ceil(self) -> Self {
+        Self(unsafe { intrinsics::ceilf64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn round(self) -> Self {
+        Self(unsafe { intrinsics::roundf64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn trunc(self) -> Self {
+        Self(unsafe { intrinsics::truncf64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn fract(self) -> Self {
+        self - self.trunc()
+    }
+
+    #[inline(always)]
+    pub fn abs(self) -> Self {
+        Self(unsafe { intrinsics::fabsf64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn is_nan(self) -> bool {
+        self.0.is_nan()
+    }
+
+    #[inline(always)]
+    pub fn signum(self) -> Self {
+        if self.is_nan() {
+            Self(std::f64::NAN)
+        } else {
+            Self(unsafe { intrinsics::copysignf64(1.0, self.0) })
+        }
+    }
+
+    #[inline(always)]
+    pub fn copysign(self, y: Self) -> Self {
+        Self(unsafe { intrinsics::copysignf64(self.0, y.0) })
+    }
+
+    #[inline(always)]
+    pub fn mul_add(self, a: Self, b: Self) -> Self {
+        Self(unsafe { intrinsics::fmaf64(self.0, a.0, b.0) })
+    }
+
+    #[inline(always)]
+    pub fn powi(self, n: i32) -> Self {
+        Self(unsafe { intrinsics::powif64(self.0, n) })
+    }
+
+    #[inline(always)]
+    pub fn powf(self, n: Self) -> Self {
+        Self(unsafe { intrinsics::powf64(self.0, n.0) })
+    }
+
+    #[inline(always)]
+    pub fn sqrt(self) -> Self {
+        Self(unsafe { intrinsics::sqrtf64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn exp(self) -> Self {
+        Self(unsafe { intrinsics::expf64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn exp2(self) -> Self {
+        Self(unsafe { intrinsics::exp2f64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn ln(self) -> Self {
+        Self(unsafe { intrinsics::logf64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn log(self, base: Self) -> Self {
+        self.ln() / base.ln()
+    }
+
+    #[inline(always)]
+    pub fn log2(self) -> Self {
+        Self(unsafe { intrinsics::log2f64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn log10(self) -> Self {
+        Self(unsafe { intrinsics::log10f64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn sin(self) -> Self {
+        Self(unsafe { intrinsics::sinf64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn cos(self) -> Self {
+        Self(unsafe { intrinsics::cosf64(self.0) })
+    }
+
+    #[inline(always)]
+    pub fn sin_cos(self) -> (Self, Self) {
+        (self.sin(), self.cos())
+    }
+
+    #[inline]
+    pub fn asinh(self) -> Self {
+        if self.0 == std::f64::NEG_INFINITY {
+            self
+        } else {
+            (self + ((self * self) + 1.0).sqrt()).ln()
+        }
+    }
+
+    #[inline]
+    pub fn acosh(self) -> Self {
+        match self {
+            x if x < 1.0.into() => std::f64::NAN.into(),
+            x => (x + ((x * x) - 1.0).sqrt()).ln(),
+        }
     }
 }
 
@@ -192,12 +461,18 @@ impl<Z> Zero for Fast<Z> where Z: Zero {
 */
 #[cfg(feature = "num-traits")]
 impl Zero for Fast<f64> {
+    #[inline(always)]
     fn zero() -> Self { Fast(<_>::zero()) }
+
+    #[inline(always)]
     fn is_zero(&self) -> bool { self.get().is_zero() }
 }
 #[cfg(feature = "num-traits")]
 impl Zero for Fast<f32> {
+    #[inline(always)]
     fn zero() -> Self { Fast(<_>::zero()) }
+
+    #[inline(always)]
     fn is_zero(&self) -> bool { self.get().is_zero() }
 }
 
@@ -206,6 +481,7 @@ macro_rules! impl_format {
     ($($name:ident)+) => {
         $(
         impl<F: fmt::$name> fmt::$name for Fast<F> {
+            #[inline(always)]
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 self.0.fmt(f)
             }
