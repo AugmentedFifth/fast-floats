@@ -139,18 +139,17 @@ macro_rules! impl_op {
 }
 
 macro_rules! impl_assignop {
-    ($($name:ident, $method:ident, $intrins:ident;)*) => {
+    ($($name:ident, $method:ident, $base_op:tt, $base_trait:ident;)*) => {
         $(
         impl<F, Rhs> $name<Rhs> for Fast<F>
-            where Self: Add<Rhs, Output=Self> + Copy,
+            where Self: $base_trait<Rhs, Output=Self> + Copy,
         {
             #[inline(always)]
             fn $method(&mut self, rhs: Rhs) {
-                *self = *self + rhs
+                *self = *self $base_op rhs;
             }
         }
         )*
-
     }
 }
 
@@ -163,11 +162,11 @@ impl_op! {
 }
 
 impl_assignop! {
-    AddAssign, add_assign, fadd_fast;
-    SubAssign, sub_assign, fsub_fast;
-    MulAssign, mul_assign, fmul_fast;
-    DivAssign, div_assign, fdiv_fast;
-    RemAssign, rem_assign, frem_fast;
+    AddAssign, add_assign, +, Add;
+    SubAssign, sub_assign, -, Sub;
+    MulAssign, mul_assign, *, Mul;
+    DivAssign, div_assign, /, Div;
+    RemAssign, rem_assign, %, Rem;
 }
 
 impl Neg for Fast<f64> {
